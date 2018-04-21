@@ -4,7 +4,7 @@ title: "Selenium and Bootstrap Modal Dialogs"
 date: 2018-04-08
 style: |
   body {
-  font-size: large;
+  font-size: 15px;
   }
 ---
 Bootstrap modal dialogs that scroll across the screen from any direction were causing headaches for my automation code.  
