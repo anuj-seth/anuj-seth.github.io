@@ -3,9 +3,10 @@ layout: post
 title: "Selenium and Bootstrap Modal Dialogs"
 date: 2018-04-08
 ---
-Bootstrap modal dialogs scroll across the screen from any direction and can cause headaches for Selenium automation code.
-If you have ever seen an "element not clickable at point (x,y). Other element would receive the click" seen while trying to click a button on a modal dialog then you have been bitten by this bug.
-As the dialogs move across the screen and finally come to rest at a certain position one solution that presents itself is to wait for the modal dialog or some element inside it to stop moving. This can be achieved by using a custom expected condition.
+Bootstrap modal dialogs that scroll across the screen from any direction were causing headaches for my automation code.
+I was seeing intermittent errors  "element not clickable at point (x,y). Other element would receive the click" seen while trying to click a button on a modal dialog.
+In my case there was a time lag between locating the element and clicking on it, during which the element location changed.
+I wrote a custom expected condition that waits for the element to stop moving. This expected condition can wait for the whole modal dialog to stop moving or any element inside it.
 ```
 class element_located_to_be_stationary(object):
     """An expectation that the element to be located is stationary.
@@ -27,20 +28,11 @@ class element_located_to_be_stationary(object):
 ```
 This expected condition can be used in your code as follows
 ```
-driver = webdriver.Chrome()
-driver.maximize_window()
-driver.get("file:///C:/temp/modal.html")
-
-
-open_modal = driver.find_element_by_css_selector('button[data-toggle=modal]')
-open_modal.click()
-
-modal_element = (By.CSS_SELECTOR, #'div.modal-content') 
-                 'button.btn[data-dismiss=modal]')
+# assuming that the element of interest is a button inside the modal dialog 
+btn_in_modal_locator = (By.CSS_SELECTOR,
+                        'button.btn')
 wait = WebDriverWait(driver, 10)
-#wait.until(EC.visibility_of_element_located(modal_element))
-close_modal = wait.until(element_located_to_be_stationary(modal_element))
-close_modal.click()
-
+btn_in_modal = wait.until(element_located_to_be_stationary(btn_in_modal_locator))
+btn_in_modal.click()
 
 ```
