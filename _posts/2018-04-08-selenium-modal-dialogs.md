@@ -2,6 +2,7 @@
 layout: post
 title: "Selenium and Bootstrap Modal Dialogs"
 date: 2018-04-08
+theme: minima
 ---
 Bootstrap modal dialogs that scroll across the screen from any direction were causing headaches for my automation code.  
 I was seeing intermittent errors  "element not clickable at point (x,y). Other element would receive the click" while trying to click a button on a modal dialog.  
