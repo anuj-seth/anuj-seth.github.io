@@ -11,9 +11,9 @@ style: |
 ---
 Bootstrap modal dialogs that scroll across the screen from any direction were causing headaches for my automation code.  
 
-I was seeing intermittent errors  "element not clickable at point (x,y). Other element would receive the click" while trying to click a button on a modal dialog.  
-In my case there was a time lag between locating the element and clicking on it, during which the element location changed.  
-I wrote a custom expected condition that waits for the element to stop moving - it can wait for the modal dialog  or any element inside it to stop moving.  
+When my script clicked on a button in a modal dialog, sometimes I would see the error "element not clickable at point (x,y). Other element would receive the click".  
+The only explanation I could come up with was that the browser was busy and hence delayed processing my button click.  
+I wrote a custom expected condition that waits for the element - the modal dialog  or any element inside it - to stop moving and only then attempts to interact with it.  
 ```
 class element_located_to_be_stationary(object):
     """An expectation that the element to be located is stationary.
