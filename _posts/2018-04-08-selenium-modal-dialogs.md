@@ -2,15 +2,18 @@
 layout: post
 title: "Selenium and Bootstrap Modal Dialogs"
 date: 2018-04-08
+category: python
+tags: python selenium bootstrap-modal
 style: |
   body {
   font-size: 15px;
   }
 ---
 Bootstrap modal dialogs that scroll across the screen from any direction were causing headaches for my automation code.  
+
 I was seeing intermittent errors  "element not clickable at point (x,y). Other element would receive the click" while trying to click a button on a modal dialog.  
 In my case there was a time lag between locating the element and clicking on it, during which the element location changed.  
-I wrote a custom expected condition that waits for the element to stop moving. This expected condition can wait for the whole modal dialog to stop moving or any element inside it.  
+I wrote a custom expected condition that waits for the element to stop moving - it can wait for the modal dialog  or any element inside it to stop moving.  
 ```
 class element_located_to_be_stationary(object):
     """An expectation that the element to be located is stationary.
