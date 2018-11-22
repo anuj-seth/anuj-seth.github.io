@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "JavaFx and Clojure"
-date: 2018-08-16
+date: 2018-11-22
 category: clojure
 tags: clojure javafx gui
 style: |
