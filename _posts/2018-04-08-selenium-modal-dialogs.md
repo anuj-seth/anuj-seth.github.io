@@ -25,7 +25,6 @@ class element_located_to_be_stationary(object):
     def __call__(self, driver):
         elt = driver.find_element(*self.locator)
         current_position = elt.location_once_scrolled_into_view
-        print("last_position {0}, current_position {1}".format(self.last_position, current_position))
         if self.last_position is None or (current_position != self.last_position):
             self.last_position = current_position
             return False
