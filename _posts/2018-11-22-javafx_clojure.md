@@ -12,7 +12,7 @@ style: |
 I want to make an application to plot real time current/voltage readings - a homegrown oscilloscope with the data rendered on my computer.  
 With that end result in mind, this series of blog posts will explore GUI desktop application development on the JVM.  
 The prevailing wisdom in software circles holds that I should use Electron to build my application but I choose to take the simpler path of staying within the clojure eco-system. I also want to explore finite state machines and core.async and see if these ideas enable a cleaner GUI codebase.  
-JavaFx is the leading GUI application development framework on the JVM and it has a clojure wrapper in [fn-fx](https://github.com/fn-fx/fn-fx).  
+Hence the choice of JavaFx, the leading GUI application development framework on the JVM which also has a clojure wrapper in [fn-fx](https://github.com/fn-fx/fn-fx).  
 Even though it is tempting to start right away on my oscilloscope project I will take some time to explore GUI development as I do not have experience in the area. In this blog post I will create a simple hello world GUI application using java interop, converting it to fn-fx in the next post. The application has only one button, clicking on which prints a message to the console.  
 The full code listing for this post is [here](https://github.com/anuj-seth/javafx-simple).  
 
