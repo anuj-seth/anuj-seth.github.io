@@ -46,4 +46,5 @@ The Application/start method is the entry point for any JavaFx application and h
         (.setScene scene)
         (.show)))))
 ```
-This is the standard JavaFx "hello world" example found on the official documentation page. There is one addition though, an icon in the title bar which is a picture of the globe.
+This is the standard "hello world" example found on the JavaFx official documentation page. There is one addition though, an icon in the title bar which is a picture of the globe.
+![javafx-simple]({{ site.url }}/assets/images/javafx_simple.png)
