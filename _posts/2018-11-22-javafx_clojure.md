@@ -2,7 +2,7 @@
 layout: post
 title: "JavaFx and Clojure"
 date: 2018-11-22
-category: clojure
+categories: clojure
 tags: clojure javafx gui
 style: |
   body {

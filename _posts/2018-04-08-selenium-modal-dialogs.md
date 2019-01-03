@@ -2,7 +2,7 @@
 layout: post
 title: "Selenium and Bootstrap Modal Dialogs"
 date: 2018-04-08
-category: python
+categories: python
 tags: python selenium bootstrap-modal
 style: |
   body {
