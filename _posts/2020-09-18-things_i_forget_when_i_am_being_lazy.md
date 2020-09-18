@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Things I forget when I am being lazy"
-date: 2020-08-20
+date: 2020-09-18
 categories: clojure
 tags: clojure laziness
 style: |
