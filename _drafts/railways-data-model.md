@@ -75,30 +75,26 @@ select station_code, station_name from all_stations_ranked where r = 1;
 
 ```
 *NOTE* I choose not to introduce a surrogate key in the ***stations*** table for aesthetic reasons.  
-With that out of the way, we can now get down to the job of splitting the original data into two tables - one for each train
+With that out of the way, we can now get down to the job of splitting the original data into two tables - one for each train and a second table for the intermediate stops on a train's route.  
 ```
 create table trains
 (train_no integer primary key,
  train_name text,
- source_station text,
- source_station_name text,
- destination_station text,
- destination_station_name text);
+ source_station_code text references stations(station_code),
+ destination_station_code text references stations(station_code));
 
-insert into trains (train_no, train_name, source_station, source_station_name, destination_station, destination_station_name)
-select distinct train_no, train_name, source_station, source_station_name, destination_station, destination_station_name from staging_trains;
-```
-```
+insert into trains (train_no, train_name, source_station_code, destination_station_code)
+select distinct train_no, train_name, source_station, destination_station from staging_trains;
+
 create table train_stations
 (train_no integer,
  seq smallint,
- station_code text,
- station_name text,
+ station_code text references stations(station_code),
  arrival_time time without time zone,
  departure_time time without time zone,
  distance_from_origin smallint,
- constraint train_station_seq primary key (train_no, seq));
+ constraint train_stations_pk primary key (train_no, seq));
 
-insert into train_stations (train_no, seq, station_code, station_name, arrival_time, departure_time, distance_from_origin)
-select train_no, seq, station_code, station_name, arrival_time, departure_time, distance from staging_trains;
+insert into train_stations (train_no, seq, station_code, arrival_time, departure_time, distance_from_origin)
+select train_no, seq, station_code, arrival_time, departure_time, distance from staging_trains;
 ```
