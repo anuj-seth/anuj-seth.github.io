@@ -16,6 +16,7 @@ It's definitely not the size of the data. The Indian railways network is huge bu
 Things get interesting when you consider that all the stops along a train's route have to be kept in one table with linkage from one stop to the next one on the route. To find a train between a pair of stations a query would have to move along these linkages from one row to next until it finds the station it is looking for. In relational database terms these are called self joins - manageable if you know in advance how many self joins are needed and even then a maximum of 3 or 4 of them. With our data the station we are looking for could be the next stop or hundred stops removed from the starting station.  
 Modeling this parent child or hierarchical relationship of arbitrary depth is what makes this interesting.  
 &nbsp;  
+### The data
 The [dataset](https://data.gov.in/resources/indian-railways-time-table-trains-available-reservation-01112017) used is the 2017 railway timetable and all the code (including the dataset) can be found [here](https://github.com/anuj-seth/railways-data-model). Have a Postgres database up and running if you want to follow along by running the SQL statements in this blog post.  
 &nbsp;  
 The dataset contains one row for each station along a train's route with other information like the arrival and departure time and the distance travelled.  
@@ -43,8 +44,12 @@ The information of each station on the route is given by ***station_code*** and 
 ***arrival_time*** and ***departure_time*** are self describing.  
 The column ***distance*** is the cumulative distance travelled by the train to reach the station. So it makes sense that when ***seq*** is 1 the ***distance*** is 0.  
 The columns ***source_station***/***source_station_name*** and ***destination_station***/***destination_station_name*** are the origin and final stations for the train.  
+&nbsp;  
+### Before we normalize
+All tables in our database should address a single subject and we should not have redundant data i.e. the same piece of information in multiple places.  
+The staging table breaks both these rules.  
 ```
-select * from staging_trains limit 8;
+select * from staging_trains order by train_no asc, seq asc limit 8;
 
 train_no |  train_name  | seq | station_code | station_name | arrival_time | departure_time | distance | source_station | source_station_name | destination_station | destination_station_name 
 ----------|--------------|-----|--------------|--------------|--------------|----------------|----------|----------------|---------------------|---------------------|--------------------------
@@ -59,9 +64,10 @@ train_no |  train_name  | seq | station_code | station_name | arrival_time | dep
 
 ```
 &nbsp;  
-The first thing that jumps out when looking at this data is that it combines two pieces of information in each row - the source and destination of a train and the information of an intermediate stop. We should split this information into two tables but before we do that there's another problem that needs to be addressed first.  
-Duplicating data opens the door for discrepancies and we see this in the very first row above. The columns ***station_name*** and ***source_station_name*** hold slightly different values - SAWANTWADI R vs SAWANRWADI ROAD - even though both use the same station code value.
-Let's fix this by extracting all the station codes and names to a new table - whenever we have a station code with different data in the name column we will take the longest string on the assumption that longer name is better.  
+This table combines two pieces of information in each row - the source and destination of a train as well as the information of an intermediate stop. We also have duplicated data as seen in the columns ***station_name***, ***source_station_name*** and ***destination_station_name***.  
+Duplicating data opens the door for discrepancies to creep in and we see this in the very first row above. The columns ***station_name*** and ***source_station_name*** hold slightly different values - SAWANTWADI R vs SAWANRWADI ROAD - even though both use the same station code value.  
+Modifying redundant data is another challenge. Consider what happens if we have to update the name of a station - we would have to find all the rows with that station code/name in either of the three columns and update them.   
+Let's remove the redundant station names by extracting all the station codes and names to a new table - whenever we have a station code with different data in the name column we will take the longest string on the assumption that longer name is better.  
 ```
 CREATE TEMP TABLE all_stations AS
 SELECT station_code, station_name FROM staging_trains
@@ -117,14 +123,11 @@ INSERT INTO train_stations
 SELECT train_no, seq, station_code, arrival_time, departure_time, distance 
 FROM staging_trains;
 ```
-The datamodel looks like this now
-<p align="center">
-<img src="{{ site.url }}/assets/images/railways-data-model/railways_data_model_1.jpg">
-</p>
-### When does a train arrive at it's origin or leave from the destination ?
-Let's take another look at our ***train_stations*** table.
+&nbsp;  
+### When does a train arrive at the origin or leave from the destination ?
+Trains do not arrive at their origin point or ever leave from their destination station but our data implies otherwise.  
 ```
-select * from train_stations limit 4;
+select * from train_stations order by train_no asc, seq asc limit 4;
 
 train_no | seq | station_code | arrival_time | departure_time | distance_from_origin 
 ---------|-----|--------------|--------------|----------------|----------------------
@@ -134,8 +137,9 @@ train_no | seq | station_code | arrival_time | departure_time | distance_from_or
      107 |   4 | MAO          | 12:10:00     | 00:00:00       |                   78
 
 ```
-The ***arrival_time*** at the originating station and the ***departure_time*** from the destination are set as midnight (00:00:00). These are, obviously, dummy values as there is no valid arrival time at the origin or departure time for the terminating station.  
+The ***arrival_time*** at the originating station and the ***departure_time*** from the destination are set as midnight (00:00:00). These are, obviously, dummy values as there is no arrival time at the origin or departure from the terminating station.  
 Choosing the value of midnight creates problems for queries which try to find trains arriving or leaving at midnight.  
+Filtering arrivals at origin is simple.  
 ```
 select * from train_stations t_s where arrival_time = '00:00:00' and station_code = 'NDLS';
 
@@ -146,16 +150,13 @@ select * from train_stations t_s where arrival_time = '00:00:00' and station_cod
     12622 |   1 | NDLS         | 00:00:00     | 22:30:00       |                    0
     22412 |   1 | NDLS         | 00:00:00     | 15:50:00       |                    0
 
-```
-The correct query would have to take the value in the ***seq*** column into account which is easy to do for originating stations as we know that ***seq*** will be 1 in that case.  
-```
 select * from train_stations t_s where arrival_time = '00:00:00' and station_code = 'NDLS' and seq <> 1;
 
  train_no | seq | station_code | arrival_time | departure_time | distance_from_origin 
 ----------|-----|--------------|--------------|----------------|----------------------
 (0 rows)
 ```
-To find all trains leaving at midnight we will have to filter the rows which belong to termination points or the maximum ***seq*** on a train's route.  
+Filtering departures from destination is slightly more complicated - remove the rows which belong to termination points or the maximum ***seq*** on a train's route.  
 ```
 SELECT *
 FROM train_stations t_s_1
@@ -171,7 +172,7 @@ AND (train_no, seq) NOT IN (SELECT train_no, max(seq)
 (0 rows)
 
 ```
-What if we use null as the dummy value instead of midnight ? That seems like a reasonable compromise that will also simplify our queries.  
+My first instinct, after cursing the person who decided to use midnight as the dummy value, is to use nulls for arrival at origin or departure from destination. A null seems like a very reasonable choice here.  
 Before we can put nulls in these columns  we have to drop some constraints.  
 ```
 ALTER TABLE train_stations ALTER COLUMN arrival_time DROP NOT NULL;
@@ -189,7 +190,37 @@ WHERE (train_no, seq) IN (SELECT train_no, max(seq) as seq
                           GROUP BY train_no);
 ```
 And now our queries are simple.  
+```
+select * from train_stations where departure_time = '00:00:00';
 
+ train_no | seq | station_code | arrival_time | departure_time | distance_from_origin 
+----------|-----|--------------|--------------|----------------|----------------------
+     7517 |   3 | UDGR         | 23:58:00     | 00:00:00       |                   80
+    11079 |  24 | ANDN         | 23:55:00     | 00:00:00       |                 1704
+    15209 |  29 | BUW          | 23:55:00     | 00:00:00       |                  647
+    15909 |  16 | BPRD         | 23:58:00     | 00:00:00       |                  668
+    34754 |  13 | SJPR         | 23:59:00     | 00:00:00       |                   33
+    37291 |   4 | BLY          | 23:59:00     | 00:00:00       |                    8
+    40419 |  15 | PV           | 23:59:00     | 00:00:00       |                   23
+    43257 |   4 | PER          | 23:59:00     | 00:00:00       |                    5
+    52256 |  10 | NSA          | 23:58:00     | 00:00:00       |                  117
+    54057 |  20 | AILM         | 23:59:00     | 00:00:00       |                   73
+    79301 |  23 | SNYN         | 23:59:00     | 00:00:00       |                  218
+    96409 |  11 | OMB          | 23:59:00     | 00:00:00       |                   59
+    97437 |   9 | MTN          | 23:59:00     | 00:00:00       |                   10
+    97445 |   4 | BY           | 23:59:00     | 00:00:00       |                    4
+    97643 |   6 | CRD          | 23:59:00     | 00:00:00       |                    6
+```
+This seems like a good solution until you step back and think about the very first action we performed - dropping not null constraints on the ***arrival_time*** and ***departure_time***. A misbehaving program could put null values in these columns when we should not allow that to happen.
+There's another problem with playing fast and loose with nulls. A null should only stand for a missing or unknown value, not for data that can never exist. We are forced to use nulls since we again broke one of the cardinal rules of database design - each table should address one subject.  
+Let's split the ***train_stations*** table further so that we have seperate tables holding the arrivals and departures.  
+```
+```
+
+The datamodel looks like this now
+<p align="center">
+<img src="{{ site.url }}/assets/images/railways-data-model/railways_data_model_1.jpg">
+</p>
 ```
 select min(stops), max(stops), avg(stops) from (select count(*) as stops from train_stations group by train_no) as foo;
 
