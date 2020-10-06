@@ -108,7 +108,7 @@ INSERT INTO trains
 SELECT distinct train_no, train_name, source_station, destination_station FROM staging_trains;
 
 CREATE TABLE train_stations
-(train_no integer,
+(train_no integer REFERENCES trains(train_no),
  seq smallint,
  station_code text NOT NULL REFERENCES stations(station_code),
  arrival_time time without time zone NOT NULL,
@@ -138,8 +138,8 @@ train_no | seq | station_code | arrival_time | departure_time | distance_from_or
 
 ```
 The ***arrival_time*** at the originating station and the ***departure_time*** from the destination are set as midnight (00:00:00). These are, obviously, dummy values as there is no arrival time at the origin or departure from the terminating station.  
-Choosing the value of midnight creates problems for queries which try to find trains arriving or leaving at midnight.  
-Filtering arrivals at origin is simple.  
+Choosing the value of midnight gives wrong results for queries trying to find trains arriving or leaving at midnight, unless special care is taken.  
+Filtering arrivals at origin is simple, as seen in the second query below.  
 ```
 select * from train_stations t_s where arrival_time = '00:00:00' and station_code = 'NDLS';
 
@@ -173,7 +173,7 @@ AND (train_no, seq) NOT IN (SELECT train_no, max(seq)
 
 ```
 My first instinct, after cursing the person who decided to use midnight as the dummy value, is to use nulls for arrival at origin or departure from destination. A null seems like a very reasonable choice here.  
-Before we can put nulls in these columns  we have to drop some constraints.  
+Before we can put nulls in these columns though, we have to drop some constraints.  
 ```
 ALTER TABLE train_stations ALTER COLUMN arrival_time DROP NOT NULL;
 
@@ -189,7 +189,7 @@ WHERE (train_no, seq) IN (SELECT train_no, max(seq) as seq
                           FROM train_stations
                           GROUP BY train_no);
 ```
-And now our queries are simple.  
+Our queries are simpler now.  
 ```
 select * from train_stations where departure_time = '00:00:00';
 
@@ -211,13 +211,45 @@ select * from train_stations where departure_time = '00:00:00';
     97445 |   4 | BY           | 23:59:00     | 00:00:00       |                    4
     97643 |   6 | CRD          | 23:59:00     | 00:00:00       |                    6
 ```
-This seems like a good solution until you step back and think about the very first action we performed - dropping not null constraints on the ***arrival_time*** and ***departure_time***. A misbehaving program could put null values in these columns when we should not allow that to happen.
-There's another problem with playing fast and loose with nulls. A null should only stand for a missing or unknown value, not for data that can never exist. We are forced to use nulls since we again broke one of the cardinal rules of database design - each table should address one subject.  
+With this we can congratulate ourselves on a job well done and yet something feels not quite right.  
+&nbsp;  
+### The problem with nulls
+Take a step back and think about the very first action we performed to introduce nulls - we dropped not null constraints on the ***arrival_time*** and ***departure_time*** columns. A misbehaving program could put null values in these columns when that should never be the case and we just removed our safety net at the database level.  
+The second problem with playing fast and loose with nulls - a null should only stand for a missing or unknown value, not for data that can never exist.  
 Let's split the ***train_stations*** table further so that we have seperate tables holding the arrivals and departures.  
 ```
-```
+CREATE TABLE train_arrivals
+(train_no integer,
+ seq smallint,
+ arrival_time time without time zone NOT NULL,
+ CONSTRAINT train_arrivals_pk PRIMARY KEY (train_no, seq),
+ CONSTRAINT train_arrivals_fk FOREIGN KEY (train_no, seq) REFERENCES train_stations(train_no, seq));
 
-The datamodel looks like this now
+INSERT INTO train_arrivals (train_no, seq, arrival_time)
+SELECT train_no, seq, arrival_time
+FROM train_stations
+WHERE arrival_time is not null;
+
+CREATE TABLE train_departures
+(train_no integer,
+ seq smallint,
+ departure_time time without time zone NOT NULL,
+ CONSTRAINT train_departures_pk PRIMARY KEY (train_no, seq),
+ CONSTRAINT train_departures_fk FOREIGN KEY (train_no, seq) REFERENCES train_stations(train_no, seq));
+
+INSERT INTO train_departures (train_no, seq, departure_time)
+SELECT train_no, seq, departure_time
+FROM train_stations
+WHERE departure_time is not null;
+```
+And now we can drop these columns from the ***train_stations*** table.  
+```
+ALTER TABLE train_stations DROP COLUMN arrival_time;
+
+ALTER TABLE train_stations DROP COLUMN departure_time;
+
+```
+### The datamodel
 <p align="center">
 <img src="{{ site.url }}/assets/images/railways-data-model/railways_data_model_1.jpg">
 </p>
