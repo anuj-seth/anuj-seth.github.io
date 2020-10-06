@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Railways timetable data model - Part 1"
+title: "Railways timetable - Part 1 - From CSV to relations"
 date: 2020-09-20
 categories: data-modeling
 tags: data-modeling postgresql
@@ -49,7 +49,7 @@ The columns ***source_station***/***source_station_name*** and ***destination_st
 All tables in our database should address a single subject and we should not have redundant data i.e. the same piece of information in multiple places.  
 The staging table breaks both these rules.  
 ```
-select * from staging_trains order by train_no asc, seq asc limit 8;
+select * from staging_trains order by train_no, seq limit 8;
 
 train_no |  train_name  | seq | station_code | station_name | arrival_time | departure_time | distance | source_station | source_station_name | destination_station | destination_station_name 
 ----------|--------------|-----|--------------|--------------|--------------|----------------|----------|----------------|---------------------|---------------------|--------------------------
@@ -127,7 +127,7 @@ FROM staging_trains;
 ### When does a train arrive at the origin or leave from the destination ?
 Trains do not arrive at their origin point or ever leave from their destination station but our data implies otherwise.  
 ```
-select * from train_stations order by train_no asc, seq asc limit 4;
+select * from train_stations order by train_no, seq limit 4;
 
 train_no | seq | station_code | arrival_time | departure_time | distance_from_origin 
 ---------|-----|--------------|--------------|----------------|----------------------
