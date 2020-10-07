@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Railways timetable - Part 1 - From CSV to relations"
-date: 2020-09-20
+date: 2020-10-07
 categories: data-modeling
 tags: data-modeling postgresql
 style: |
@@ -211,7 +211,7 @@ select * from train_stations where departure_time = '00:00:00';
     97445 |   4 | BY           | 23:59:00     | 00:00:00       |                    4
     97643 |   6 | CRD          | 23:59:00     | 00:00:00       |                    6
 ```
-With this we can congratulate ourselves on a job well done and yet something feels not quite right.  
+With this we can congratulate ourselves on a job well done, and yet something feels not quite right.  
 &nbsp;  
 ### The problem with nulls
 Take a step back and think about the very first action we performed to introduce nulls - we dropped not null constraints on the ***arrival_time*** and ***departure_time*** columns. A misbehaving program could put null values in these columns when that should never be the case and we just removed our safety net at the database level.  
@@ -249,37 +249,67 @@ ALTER TABLE train_stations DROP COLUMN arrival_time;
 ALTER TABLE train_stations DROP COLUMN departure_time;
 
 ```
+&nbsp;  
 ### The datamodel
 <p align="center">
 <img src="{{ site.url }}/assets/images/railways-data-model/railways_data_model_1.jpg">
 </p>
+&nbsp;  
+### Getting to know the datamodel
+What are the maximum, minimum and average halts for trains ?
+We only want to count the intermediate stations and not the source or the destination. The table ***train_arrivals*** does not have the source while ***train_departures*** does not have the destination station, so we should count the stations that appear in both the tables.  
 ```
-select min(stops), max(stops), avg(stops) from (select count(*) as stops from train_stations group by train_no) as foo;
+select min(halts), avg(halts), max(halts)
+from (select count(*) as halts
+      from train_arrivals t_a
+      where exists (select 1
+                    from train_departures t_d
+                    where train_no = t_a.train_no and seq = t_a.seq)
+      group by train_no
+     ) as foo;
+      
+ min |         avg         | max 
+-----|---------------------|-----
+   1 | 16.6171550238264220 | 116
 
- min | max |         avg     
------|-----|---------------------
-   2 | 118 | 16.7493700503959683
 ```
+&nbsp;  
+How long do trains stop at stations ?  
+In this case special care needs to be taken for trains where the arrival and departure span the dateline or midnight.  
+Let's say a train arrives 15 minutes before midnight and leaves 15 minutes after midnight. Then just subtracting the departure from the arrival will not work.  
 ```
-select t.*, s.station_name from trains t join stations s on s.station_code = t.source_station_code where source_station_code = destination_station_code;
- train_no |  train_name  | source_station_code | destination_station_code |     station_name     
-----------|--------------|---------------------|--------------------------|----------------------
-    52599 | DJ - GHUM -  | DJ                  | DJ                       | DARJEELING
-    52592 | DJ - GHUM -  | DJ                  | DJ                       | DARJEELING
-    52597 | DJ - GHUM -  | DJ                  | DJ                       | DARJEELING
-    52598 | DJ-GHUM-DJ J | DJ                  | DJ                       | DARJEELING
-    64091 | HNZM-HNZM EM | NZM                 | NZM                      | HAZRAT NIZAMUDDIN JN
-    52596 | DJ-GHUM-DJ J | DJ                  | DJ                       | DARJEELING
-    52593 | DJ - GHUM -  | DJ                  | DJ                       | DARJEELING
-    52594 | DJ - GHUM -  | DJ                  | DJ                       | DARJEELING
-      290 | PALACE ON WH | DSJ                 | DSJ                      | DELHI-SAFDAR JANG
-    52591 | DJ - GHUM -  | DJ                  | DJ                       | DARJEELING
-      477 | FTR TRAIN NO | SSA                 | SSA                      | SIRSA
-    64089 | NZM-NZM EMU  | NZM                 | NZM                      | HAZRAT NIZAMUDDIN JN
-    52595 | DJ-GHUM-DJ J | DJ                  | DJ                       | DARJEELING
-    64090 | NZM-NZM EMU  | NZM                 | NZM                      | HAZRAT NIZAMUDDIN JN
-    64092 | NZM-NZM EMU  | NZM                 | NZM                      | HAZRAT NIZAMUDDIN JN
-```
-What are the start and end times of a train ?
+select '00:15:00'::time - '23:45:00'::time as halt_time;
 
-What is the average time a train stops at a station ?
+ halt_time 
+-----------
+ -23:30:00
+
+```
+What we need to do is to subtract the arrival time from midnight, subtract midnight from the departure time and then add the two as in the case statement below.  
+```
+select max(halt_time) as max_halt_time,
+       min(halt_time) as min_halt_time,
+       avg(halt_time) as average_halt_time,
+       percentile_cont(0.5) within group (order by halt_time) as median_halt_time
+from (select arrivals.train_no,
+             arrivals.seq,
+             arrivals.arrival_time,
+             departures.departure_time,
+             (case when departures.departure_time < arrivals.arrival_time
+                   then ('24:00:00'::time - arrivals.arrival_time) + (departures.departure_time - '00:00:00'::time)
+                   else (departures.departure_time - arrivals.arrival_time)
+              end) as halt_time
+      from train_arrivals arrivals
+      join train_departures departures on arrivals.train_no = departures.train_no
+                                          and arrivals.seq = departures.seq
+     ) as foo;
+
+ max_halt_time | min_halt_time | average_halt_time | median_halt_time 
+---------------|---------------|-------------------|------------------
+ 04:00:00      | 00:01:00      | 00:02:31.564111   | 00:01:00
+
+```
+&nbsp;  
+### A not so final conclusion
+We have our data nicely laid out in tables, but is this good enough to find trains between any two stations ?  
+Stay tuned for the next installment in this series to find out.  
