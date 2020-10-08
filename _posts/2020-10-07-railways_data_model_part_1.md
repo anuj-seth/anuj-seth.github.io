@@ -11,7 +11,7 @@ style: |
 ---
 The Indian Railways runs more than 12000 trains between 8000 stations covering a distance of 120000 Kms. It carried 8 billion people in 2019 with 9000 trains running each day, moving people and freight to all corners of the country.  
 &nbsp;  
-Why is modeling the train routes an intersting exercise ?  
+Why is modeling the train routes an interesting exercise ?  
 Finding all the trains travelling between a pair of stations is a classic graph search problem, traditionally not a strong suit of relational databases. In this series of blog posts I explore how to model train routes in a relational database.  
 &nbsp;  
 ### The data
