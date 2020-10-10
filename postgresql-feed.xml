@@ -12,7 +12,7 @@ layout: null
     {% unless post.draft %}
     {% if post.categories contains 'postgresql' %}
     <item>
-      <category>postgresql</category>
+      <category>PostgreSQL</category>
       <title>{{ post.title | xml_escape }}</title>
       <description>{{ post.excerpt | xml_escape }}</description>
       <pubDate>{{ post.date | date_to_xmlschema }}</pubDate>

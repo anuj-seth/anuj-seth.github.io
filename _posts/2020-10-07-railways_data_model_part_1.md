@@ -3,7 +3,7 @@ layout: post
 title: "Railways route graph - Part 1 - From CSV to relations"
 date: 2020-10-07
 categories: postgresql
-tags: data-modeling postgresql
+tags: postgresql data-modeling
 style: |
   body {
   font-size: 15px;
