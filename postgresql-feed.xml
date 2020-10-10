@@ -6,6 +6,7 @@ layout: null
   <channel>
     <title>anuj seth</title>
     <description>PostgreSQL</description>
+    <category>postgresql</category>
     <link>{{ site.url }}</link>
     {% for post in site.posts %}
     {% unless post.draft %}
