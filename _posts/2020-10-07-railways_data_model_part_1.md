@@ -2,7 +2,7 @@
 layout: post
 title: "Railways route graph - Part 1 - From CSV to relations"
 date: 2020-10-07
-categories: data-modeling postgresql
+categories: postgresql
 tags: data-modeling postgresql
 style: |
   body {
