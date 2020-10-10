@@ -6,20 +6,20 @@ layout: null
   <channel>
     <title>anuj seth</title>
     <description>PostgreSQL</description>
-    <category>postgresql</category>
     <link>{{ site.url }}</link>
     {% for post in site.posts %}
     {% unless post.draft %}
     {% if post.categories contains 'postgresql' %}
-        <item>
-          <title>{{ post.title | xml_escape }}</title>
-          <description>{{ post.excerpt | xml_escape }}</description>
-          <pubDate>{{ post.date | date_to_xmlschema }}</pubDate>
-          <link>{{ post.url | prepend: site.url }}</link>
-          <guid isPermaLink="true">{{ post.url | prepend: site.url }}</guid>
-        </item>
-        {% endif %}
-        {% endunless %}
+    <item>
+      <category>postgresql</category>
+      <title>{{ post.title | xml_escape }}</title>
+      <description>{{ post.excerpt | xml_escape }}</description>
+      <pubDate>{{ post.date | date_to_xmlschema }}</pubDate>
+      <link>{{ post.url | prepend: site.url }}</link>
+      <guid isPermaLink="true">{{ post.url | prepend: site.url }}</guid>
+    </item>
+    {% endif %}
+    {% endunless %}
 
     {% endfor %}
   </channel>
