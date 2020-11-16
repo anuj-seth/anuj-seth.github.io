@@ -317,4 +317,3 @@ For situations like train routes where the data is relatively static - trains do
 ### What if I want to find routes with layovers ?
 Airline flight searches typically show direct as well as routes with layovers but the Indian government railways ticket booking website does not. It only shows a single train that can take you from your origin to the destination station or nothing at all. Other popular travel booking portals follow suit and there may be valid business reasons for this which I am not aware of.  
 As a programming problem it piques my interest - is it possible to find train journeys with layovers ?  
-I try to answer that question in the next part.  
