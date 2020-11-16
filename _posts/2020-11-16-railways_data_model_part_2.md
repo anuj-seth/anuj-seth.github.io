@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Railways route graph - Part 2 - Recursive Queries"
-date: 2020-11-03
+date: 2020-11-16
 categories: postgresql
 tags: PostgreSQL data-modeling
 style: |
@@ -9,19 +9,18 @@ style: |
   font-size: 15px;
   } 
 ---
-[Part 1](https://anuj-seth.github.io/postgresql/2020/10/07/railways_data_model_part_1.html) ended with this data model.  
+Can I use the data model from [part 1](https://anuj-seth.github.io/postgresql/2020/10/07/railways_data_model_part_1.html) to plan travels around India ?  
 &nbsp;  
 <p align="center">
 <img src="{{ site.url }}/assets/images/railways-data-model/railways_data_model_1.jpg">
 </p>
 &nbsp;  
-Can I use this data model to find trains between stations ?  
-The short answer is yes. The long answer is this blog post.  
+The short answer to that question is yes. The long answer is this blog post.  
 &nbsp;  
-### Where can one train change take me ?
-Starting from Warangal station what places can I reach by changing trains only once ?  
-What's so special about Warangal ? I was looking for stations in this dataset with only one or two originating trains so that the final list of stations reached would be small enough to be printed in full and the name Warangal intrigued me. 
-As I am only interested in final destinations, not intermediate stations, the ***trains*** table can be joined with itself where the destination of the first train matches the origin of another train.  
+### Where can one train change from Warangal take me ?
+Why did I choose Warangal for this example ? 
+I searched the dataset for stations with only one or two originating trains, hoping that the number of stations one train change away would be manageable. Only two trains start from Warangal and the name has a nice ring to it.  
+The ***trains*** table will serve my purpose as it has the origin and destination stations for all trains and I only care for final destinations, not intermediate stations. Joining the ***trains*** table with itself, a self-join where the destination of the first train matches the origin of another train, fetches all the relevant rows.  
 *NOTE* - WL is the station code for Warangal.  
 ```sql
 SELECT distinct train_2.destination_station_code
@@ -60,7 +59,7 @@ WHERE train_1.source_station_code = 'WL';
 (26 rows)
 
 ```
-Adding trains to my journey requires more self-joins - one for each train change.  
+Adding trains to the journey requires more self-joins - one for each train change.  
 ```sql
 SELECT count(distinct train_4.destination_station_code)
 FROM trains train_1
@@ -73,7 +72,7 @@ WHERE train_1.source_station_code = 'WL';
 -------
    684
 ```
- This is tedious, inflexible and bound to put any fledgling programmer off relational databases forever but this is exactly the kind of problem where recursive queries shine. 
+ This is tedious, inflexible and bound to put any fledgling programmer off relational databases forever but this is exactly the kind of problem where recursion shines. 
 &nbsp;  
 ### Recursive Queries
 Most modern relaltional databases support recursive queries as common table expressions (CTE) using the ***WITH*** clause.  
@@ -317,5 +316,5 @@ For situations like train routes where the data is relatively static - trains do
 &nbsp;  
 ### What if I want to find routes with layovers ?
 Airline flight searches typically show direct as well as routes with layovers but the Indian government railways ticket booking website does not. It only shows a single train that can take you from your origin to the destination station or nothing at all. Other popular travel booking portals follow suit and there may be valid business reasons for this which I am not aware of.  
-As a programming problem it piques my interest - can I find train journeys with layovers ?  
+As a programming problem it piques my interest - is it possible to find train journeys with layovers ?  
 I try to answer that question in the next part.  
