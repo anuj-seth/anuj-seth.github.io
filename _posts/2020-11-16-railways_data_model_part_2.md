@@ -75,7 +75,7 @@ WHERE train_1.source_station_code = 'WL';
  This is tedious, inflexible and bound to put any fledgling programmer off relational databases forever but this is exactly the kind of problem where recursion shines. 
 &nbsp;  
 ### Recursive Queries
-Most modern relaltional databases support recursive queries as common table expressions (CTE) using the ***WITH*** clause.  
+Most modern relational databases support recursive queries as common table expressions (CTE) using the ***WITH*** clause.  
 Recursive queries consist of a non-recursive SQL statement and a recursive statement joined by a ***UNION ALL*** or a ***UNION***. The non-recursive part kicks off the process by selecting an initial set of rows from the database, which is contrary to how it works in programming languages where the non-recursive part terminates the recursion. Recursive queries terminate when no more rows are returned by the recursive SQL statement.  
 To illustrate the process, I use ***WITH RECURSIVE*** in a query that lacks recursion, thus returning only the initial set of rows.  
 ```sql
@@ -311,7 +311,7 @@ train_no
 ```
 &nbsp;  
 ### Should I get rid of all my recursive queries ?
-Consider a social network graph where fickle friendships hinge on a like or failure to provide one. Precomputing friends of friends will not work in this case as the graph keeps changing shape. There you will need to traverse the latest web of likes or lies each time.  
+Consider a social network graph where fickle friendships hinge on a like or failure to provide one. Precomputing friends of friends will not work in this case as the graph keeps changing shape. There you will need to recursively traverse the latest web of likes or lies each time.  
 For situations like train routes where the data is relatively static - trains do not add or remove stops everyday - precomputing can be the best solution for single train journeys.
 &nbsp;  
 ### What if I want to find routes with layovers ?
