@@ -247,9 +247,9 @@ train_no |  train_name
 (51 rows)
 ```
 &nbsp;  
-### But my company has a no recursion policy
-You can try convincing your boss that this is iteration and not true recursion - as mentioned in the fine PostgreSQL manual. All is not lost if that argument does not pass muster with your manager.  
-The list of stations following any station on a train's route can be precomputed and stored in a table.  
+### If your company has a no recursion policy
+You can tell your boss that this is iteration and not true recursion - as mentioned in the fine PostgreSQL manual. If that does not pass muster with your manager, all is still not lost.  
+The list of stations, coming after another station on a train's route, can be precomputed and stored in a table.  
 ```sql
 CREATE TABLE train_following_stations
 (train_no integer,
