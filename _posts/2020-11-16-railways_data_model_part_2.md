@@ -315,5 +315,6 @@ Consider a social network graph where fickle friendships hinge on a like or fail
 For situations like train routes where the data is relatively static - trains do not add or remove stops everyday - precomputing can be the best solution for single train journeys.
 &nbsp;  
 ### What if I want to find routes with layovers ?
-Airline flight searches typically show direct as well as routes with layovers but the Indian government railways ticket booking website does not. It only shows a single train that can take you from your origin to the destination station or nothing at all. Other popular travel booking portals follow suit and there may be valid business reasons for this which I am not aware of.  
-As a programming problem it piques my interest - is it possible to find train journeys with layovers ?  
+Airline flight searches typically show routes with layovers but the Indian government train ticket booking website does not. It only shows a single train that can take you from your origin to the destination station or nothing at all and other popular travel booking portals follow suit.  
+Why do travel portals not support this feature ? I don't know.  
+Is it technically possible ? I will try to answer this in the next part.  
