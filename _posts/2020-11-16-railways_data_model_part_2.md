@@ -309,6 +309,46 @@ train_no
     74923
 (51 rows)
 ```
+Two things that bother me about this solution - it's not possible to create foreign keys from the contents of the array to the ***stations*** table and the ***following_stations*** column breaks the first normal form.  
+A better table design would break the array of stations into rows - one row for each station and subsequent station pair.  
+```sql
+CREATE TABLE train_following_stations_rows
+(train_no integer,
+ seq smallint,
+ station_code text NOT NULL REFERENCES stations(station_code),
+ following_station_order smallint,
+ following_station_code text NOT NULL REFERENCES stations(station_code),
+ CONSTRAINT train_following_stations_rows_pk PRIMARY KEY (train_no, seq, station_code, following_station_order, following_station_code),
+ FOREIGN KEY (train_no, seq) REFERENCES train_stations(train_no, seq));
+
+INSERT INTO train_following_stations_rows
+(train_no, seq, station_code, following_station_order, following_station_code)
+SELECT t_f_s.train_no, t_f_s.seq, t_f_s.station_code, f.station_order, f.station 
+FROM train_following_stations t_f_s, unnest(t_f_s.following_stations) WITH ORDINALITY f(station, station_order);
+
+CREATE INDEX train_following_stations_rows_search_ix ON train_following_stations_rows (station_code, following_station_code);
+```
+The query to get all trains from Jalandhar to Amritsar is as simple as before, if not simpler.  
+```sql
+SELECT train_no FROM train_following_stations_rows WHERE station_code = 'JUC' AND following_station_code = 'ASR';
+
+ train_no 
+----------
+     1707
+    11057
+    12013
+    12029
+    12031
+    12053
+    .
+    .
+    .
+    .
+    64551
+    74643
+    74923
+(51 rows)
+```
 &nbsp;  
 ### Should I get rid of all my recursive queries ?
 Consider a social network graph where fickle friendships hinge on a like or failure to provide one. Precomputing friends of friends will not work in this case as the graph keeps changing shape. There you will need to recursively traverse the latest web of likes or lies each time.  
