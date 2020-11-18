@@ -318,7 +318,7 @@ CREATE TABLE train_following_stations_rows
  station_code text NOT NULL REFERENCES stations(station_code),
  following_station_order smallint,
  following_station_code text NOT NULL REFERENCES stations(station_code),
- CONSTRAINT train_following_stations_rows_pk PRIMARY KEY (train_no, seq, station_code, following_station_order, following_station_code),
+ CONSTRAINT train_following_stations_rows_pk PRIMARY KEY (train_no, seq, station_code, following_station_order),
  FOREIGN KEY (train_no, seq) REFERENCES train_stations(train_no, seq));
 
 INSERT INTO train_following_stations_rows
